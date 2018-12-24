@@ -19,6 +19,7 @@ package com.uber.cadence.samples.hello;
 
 import static com.uber.cadence.samples.common.SampleConstants.DOMAIN;
 
+import com.uber.cadence.activity.ActivityMethod;
 import com.uber.cadence.client.WorkflowClient;
 import com.uber.cadence.client.WorkflowOptions;
 import com.uber.cadence.worker.Worker;
@@ -37,6 +38,19 @@ import java.util.List;
 public class HelloSignal {
 
   static final String TASK_LIST = "HelloSignal";
+
+  /** Activity interface is just a POJI. */
+  public interface GreetingActivities {
+    @ActivityMethod(scheduleToCloseTimeoutSeconds = 5)
+    String composeGreeting(String greeting, String name);
+  }
+
+  static class GreetingActivitiesImpl implements GreetingActivities {
+    @Override
+    public String composeGreeting(String greeting, String name) {
+      return greeting + " " + name + "!";
+    }
+  }
 
   /** Workflow interface must have a method annotated with @WorkflowMethod. */
   public interface GreetingWorkflow {
@@ -59,6 +73,9 @@ public class HelloSignal {
   /** GreetingWorkflow implementation that returns a greeting. */
   public static class GreetingWorkflowImpl implements GreetingWorkflow {
 
+    private final GreetingActivities activities =
+        Workflow.newActivityStub(GreetingActivities.class);
+
     List<String> messageQueue = new ArrayList<>(10);
     boolean exit = false;
 
@@ -78,7 +95,7 @@ public class HelloSignal {
 
     @Override
     public void waitForName(String name) {
-      messageQueue.add("Hello " + name + "!");
+      messageQueue.add(activities.composeGreeting("Hello", name));
     }
 
     @Override

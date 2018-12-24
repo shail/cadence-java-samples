@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.uber.cadence.client.WorkflowClient;
 import com.uber.cadence.client.WorkflowOptions;
+import com.uber.cadence.samples.hello.HelloSignal.GreetingActivitiesImpl;
 import com.uber.cadence.samples.hello.HelloSignal.GreetingWorkflow;
 import com.uber.cadence.testing.TestWorkflowEnvironment;
 import com.uber.cadence.worker.Worker;
@@ -58,10 +59,10 @@ public class HelloSignalTest {
     testEnv = TestWorkflowEnvironment.newInstance();
 
     worker = testEnv.newWorker(HelloSignal.TASK_LIST);
+    worker.registerActivitiesImplementations(new GreetingActivitiesImpl());
     worker.registerWorkflowImplementationTypes(HelloSignal.GreetingWorkflowImpl.class);
-    testEnv.start();
-
     workflowClient = testEnv.newWorkflowClient();
+    testEnv.start();
   }
 
   @After
@@ -98,6 +99,7 @@ public class HelloSignalTest {
     // with WorkflowIdReusePolicy.AllowDuplicate. In that case the call would fail with
     // WorkflowExecutionAlreadyStartedException.
     List<String> greetings = workflow.getGreetings();
+    System.out.println(greetings.get(0));
     assertEquals(2, greetings.size());
     assertEquals("Hello World!", greetings.get(0));
     assertEquals("Hello Universe!", greetings.get(1));
